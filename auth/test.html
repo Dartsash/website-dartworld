@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <title>ZyroxHost - Хостинг Minecraft</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+          :root {
+            --background-color: #1a1a1a;
+            --header-background: #252525;
+            --text-color: #f0f0f0;
+            --accent-color: #00bcd4;
+            --btn-bg-color: #00bcd4;
+            --feature-item-bg: #252525;
+            --pricing-card-bg: #252525;
+            --promo-banner-bg: #252525;
+            --footer-bg: #252525;
+            --footer-text-color: #999;
+             --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            --hover-transition: all 0.3s ease-in-out;
+             --loader-color: #00bcd4;
+        }
+        body {
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+            background: var(--background-color);
+             color: var(--text-color);
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color 0.5s ease-out, color 0.5s ease-out;
+              cursor: url('data:image/svg+xml;utf8,<svg width="12" height="12" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="6" fill="%2300bcd4" /></svg>') 6 6, auto;
+       }
+          
+        .header {
+             background: var(--header-background);
+            padding: 20px 0;
+             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+             position: relative;
+           z-index: 100;
+            border-bottom: 1px solid #333;
+        }
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+           align-items: center;
+            max-width: 1200px;
+             margin: 0 auto;
+             padding: 0 20px;
+        }
+        .logo {
+           font-size: 28px;
+            font-weight: bold;
+             color: var(--accent-color);
+            position: relative;
+             transition: var(--hover-transition);
+         }
+        .logo:hover {
+             color: #00faff;
+         }
+         .logo:after {
+            content: '🎄';
+             font-size: 24px;
+            position: absolute;
+             top: 50%;
+           left: 100%;
+            transform: translate(5px, -50%);
+              transition: transform 0.3s ease;
+        }
+        .logo:after:hover {
+            transform: translate(5px, -50%) rotate(360deg);
+         }
+        .navbar {
+            display: flex;
+            align-items: center;
+        }
+       .navbar a {
+            margin-left: 30px;
+             text-decoration: none;
+            color: var(--text-color);
+             transition: var(--hover-transition);
+             position: relative;
+            padding-bottom: 5px;
+            font-size: 18px;
+       }
+        .navbar a::before {
+            content: '';
+           position: absolute;
+             width: 0;
+             height: 2px;
+             bottom: 0;
+             left: 0;
+            background-color: var(--accent-color);
+             transition: width 0.3s ease-in-out;
+         }
+         .navbar a:hover::before {
+           width: 100%;
+         }
+        .navbar a:hover {
+            color: #00faff;
+         }
+        .navbar .dropdown {
+            position: relative;
+             margin-left: 30px;
+        }
+         .navbar .dropdown .dropdown-content {
+             display: none;
+            position: absolute;
+            background-color: var(--header-background);
+             min-width: 160px;
+           box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+             padding: 10px 0;
+            margin-top: 5px;
+           border-radius: 5px;
+        }
+        .navbar .dropdown:hover .dropdown-content {
+             display: block;
+        }
+         .navbar .dropdown-content a {
+            margin: 0;
+            display: block;
+             padding: 10px 20px;
+            font-size: 16px;
+         }
+        .navbar .dropdown-content a::before {
+             display: none;
+        }
+        .navbar .dropdown-content a:hover {
+           color: #00faff;
+            background-color: #333;
+         }
+        .hero {
+            text-align: center;
+             padding: 100px 20px;
+            background: var(--header-background);
+             animation: fadeIn 1.5s ease-in-out;
+            position: relative;
+            overflow: hidden;
+       }
+        .hero::before {
+            content: '';
+            position: absolute;
+             top: 0;
+            left: 0;
+            width: 100%;
+             height: 100%;
+             background: url('https://cdn.pixabay.com/photo/2023/12/22/16/37/abstract-8463723_1280.png') center/cover no-repeat;
+             opacity: 0.1;
+            pointer-events: none;
+        }
+         .hero-title{
+            font-size: 48px;
+             margin: 0 0 20px;
+            color: var(--text-color);
+        }
+        .hero p {
+            font-size: 18px;
+             margin-bottom: 30px;
+             max-width: 800px;
+            margin-left: auto;
+             margin-right: auto;
+        }
+       .btn {
+            display: inline-block;
+             background: var(--btn-bg-color);
+            color: #fff;
+            text-decoration: none;
+             padding: 10px 25px;
+             border-radius: 5px;
+            font-size: 18px;
+             border: none;
+            cursor: pointer;
+           transition: var(--hover-transition);
+       }
+        .btn:hover {
+           background-color: #00faff;
+             color: #1a1a1a;
+        }
+        .features,
+        .pricing {
+             padding: 50px 20px;
+            opacity: 0;
+             transform: translateY(50px);
+            transition: opacity 1s, transform 1s;
+         }
+        .features.visible,
+       .pricing.visible {
+             opacity: 1;
+             transform: translateY(0);
+         }
+       .features {
+           background-color: var(--background-color);
+           border-bottom: 1px solid #333;
+        }
+        .features h2,
+         .pricing h2, .h2-our-services {
+             text-align: center;
+           margin-bottom: 40px;
+            color: var(--accent-color);
+             font-size: 32px;
+        }
+        .features-list {
+           display: flex;
+            justify-content: center;
+           flex-wrap: wrap;
+             gap: 30px;
+             max-width: 1200px;
+            margin: 0 auto;
+        }
+        .feature-item {
+            background: var(--feature-item-bg);
+            padding: 30px;
+             border-radius: 10px;
+           width: calc(50% - 60px);
+            box-shadow: var(--box-shadow);
+            text-align: left;
+            transition: var(--hover-transition);
+             display: flex;
+            align-items: center;
+            gap: 20px;
+            border: 1px solid #333;
+         }
+        .feature-item:hover {
+            transform: translateY(-5px);
+         }
+       .feature-item i {
+            font-size: 3rem;
+            color: var(--accent-color);
+           transition: transform 0.3s ease-in-out;
+            flex-shrink: 0;
+        }
+        .feature-item:hover i {
+            transform: scale(1.1);
+        }
+         .feature-item h3 {
+           font-size: 24px;
+             margin-bottom: 10px;
+            color: var(--accent-color);
+        }
+        .feature-item p {
+            font-size: 16px;
+        }
+       .pricing-cards {
+            display: flex;
+            justify-content: center;
+             flex-wrap: wrap;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+         }
+        .pricing-card {
+            background: var(--pricing-card-bg);
+           color: var(--text-color);
+            padding: 30px;
+            border-radius: 10px;
+           box-shadow: var(--box-shadow);
+           width: calc(25% - 40px);
+           text-align: center;
+             transition: var(--hover-transition), transform 0.3s ease;
+             margin: 10px;
+           cursor: pointer;
+            position: relative;
+           transform-style: preserve-3d;
+       }
+       .pricing-card:hover {
+            transform: scale(1.05) rotateX(5deg) rotateY(5deg);
+        }
+         .pricing-card i {
+           font-size: 3rem;
+             margin-bottom: 1rem;
+           color: var(--accent-color);
+            transition: transform 0.3s ease-in-out;
+         }
+        .pricing-card:hover i {
+            transform: scale(1.1);
+         }
+        .footer {
+             background: var(--footer-bg);
+             text-align: center;
+            padding: 20px 0;
+             margin-top: 50px;
+             color: var(--footer-text-color);
+            border-top: 1px solid #333;
+         }
+         .footer p {
+             margin: 0;
+            font-size: 14px;
+        }
+         @keyframes fadeIn {
+            from {
+                 opacity: 0;
+                transform: translateY(-20px);
+           }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+         }
+        html {
+            scroll-behavior: smooth;
+        }
+         .contact {
+             text-align: center;
+            margin-bottom: 3rem;
+         }
+        .contact h2 {
+             margin-bottom: 2rem;
+            color: var(--accent-color);
+           font-size: 32px;
+         }
+       .contact p {
+            font-size: 18px;
+           margin-bottom: 20px;
+         }
+       .contact a {
+            display: inline-block;
+             background-color: #7289da;
+            color: #fff;
+            padding: 12px 25px;
+           border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.3s ease-in-out;
+       }
+       .contact a:hover {
+           background-color: #5865f2;
+            transform: translateY(-3px);
+       }
+         .contact i {
+            margin-right: 8px;
+        }
+        .pricing h2 {
+            margin-bottom: 1rem;
+         }
+        .h2-our-services {
+            margin-bottom: 0;
+       }
+         .subtitle-our-services {
+             margin-bottom: 3rem;
+             text-align: center;
+            font-size: 1.5rem;
+         }
+         .pricing-card h3 {
+            font-size: 18px;
+             margin-bottom: 10px;
+            color: var(--accent-color);
+        }
+        .pricing-card .price {
+            font-size: 18px;
+            font-weight: bold;
+           margin-bottom: 15px;
+        }
+         .price s {
+           color: #999;
+             margin-right: 5px;
+        }
+       .price span {
+           color: var(--accent-color);
+       }
+        .pricing-card ul {
+            list-style: none;
+             padding: 0;
+            margin-bottom: 20px;
+             text-align: center;
+         }
+        .pricing-card li {
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+           justify-content: center;
+            font-size: 14px;
+        }
+         .pricing-card li i {
+            font-size: 12px;
+            margin-right: 5px;
+           margin-top: 4px;
+        }
+         @media (max-width: 768px) {
+           .pricing-card {
+                width: calc(50% - 40px);
+          }
+            .feature-item {
+               width: calc(50% - 60px);
+           }
+       }
+        @media (max-width: 480px) {
+            .pricing-card {
+                width: calc(100% - 40px);
+            }
+             .feature-item {
+                width: calc(100% - 60px);
+               flex-wrap: wrap;
+            }
+         }
+       .promo-banner {
+            background-color: var(--promo-banner-bg);
+            color: var(--accent-color);
+             padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: var(--box-shadow);
+            animation: promo-banner-glow 2s infinite alternate;
+            margin-top: 30px;
+         }
+        .promo-banner h3 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .promo-banner p {
+             font-size: 16px;
+            margin-bottom: 20px;
+        }
+        @keyframes promo-banner-glow {
+            from {
+                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+            }
+            to {
+                box-shadow: 0 2px 10px rgba(255, 140, 0, 0.7), 0 0 10px rgba(255, 140, 0, 0.5);
+            }
+         }
+        .snow-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+             width: 100%;
+             height: 100%;
+            pointer-events: none;
+            z-index: 10;
+       }
+         .snow {
+             position: absolute;
+            background-image: url("https://freesvg.org/img/snow-flake-4.png");
+            background-size: contain;
+             background-repeat: no-repeat;
+             animation: snowfall linear infinite;
+         }
+         @keyframes snowfall {
+            from {
+                 transform: translateY(-10vh);
+                opacity: 0.8;
+            }
+             to {
+               transform: translateY(100vh);
+                opacity: 0.3;
+           }
+        }
+         .header-snowflake {
+             position: absolute;
+           width: 20px;
+             height: 20px;
+            background-image: url("https://freesvg.org/img/snow-flake-4.png");
+           background-size: contain;
+             background-repeat: no-repeat;
+         }
+        .header-snowflake:nth-child(1) {
+             top: 20px;
+             left: 50px;
+         }
+         .header-snowflake:nth-child(2) {
+            top: 30px;
+             right: 100px;
+         }
+         .header-snowflake:nth-child(3) {
+            top: 50px;
+            left: 500px;
+       }
+        .pricing-card {
+            background: var(--pricing-card-bg);
+            color: var(--text-color);
+            padding: 30px;
+             border-radius: 10px;
+            box-shadow: var(--box-shadow);
+             width: calc(25% - 40px);
+             text-align: center;
+             transition: transform 0.3s;
+           margin: 10px;
+            cursor: pointer;
+            position: relative;
+             overflow: hidden;
+         }
+        .pricing-card::before {
+             content: '';
+           position: absolute;
+            top: 10px;
+           left: 10px;
+            width: 30px;
+             height: 30px;
+            background-image: url("https://freesvg.org/img/snow-flake-4.png");
+           background-size: contain;
+            background-repeat: no-repeat;
+           opacity: 0.7;
+        }
+         .team-members {
+            display: flex;
+            justify-content: center;
+             flex-wrap: wrap;
+           gap: 40px;
+        }
+        .team-member {
+            background-color: var(--feature-item-bg);
+             border-radius: 10px;
+            box-shadow: var(--box-shadow);
+             padding: 30px;
+             width: 350px;
+            text-align: center;
+            position: relative;
+           transition: box-shadow 0.3s ease;
+        }
+         .team-member:hover {
+            box-shadow: 0 5px 20px rgba(0, 188, 212, 0.7), 0 0 15px rgba(0, 188, 212, 0.5);
+        }
+        .member-image {
+           width: 150px;
+            height: 150px;
+           border-radius: 50%;
+            overflow: hidden;
+             margin: 0 auto 20px;
+         }
+        .member-image img {
+            width: 100%;
+             height: 100%;
+            object-fit: cover;
+        }
+         .member-info h3 {
+           font-size: 24px;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+         }
+        .member-info h4 {
+            font-size: 18px;
+             color: var(--text-color);
+            margin-bottom: 15px;
+             font-weight: normal;
+         }
+        .member-info p {
+            font-size: 16px;
+           line-height: 1.5;
+        }
+        .member-avatars {
+             display: flex;
+            justify-content: center;
+             margin-top: 20px;
+        }
+        .member-avatar {
+            width: 40px;
+             height: 40px;
+            border-radius: 50%;
+             margin: 0 5px;
+             cursor: pointer;
+             border: 2px solid transparent;
+            transition: border-color 0.3s ease-in-out;
+        }
+        .member-avatar.active,
+         .member-avatar:hover {
+            border-color: var(--accent-color);
+        }
+       .member-img {
+            display: none;
+        }
+         .member-img.active {
+            display: block;
+         }
+        .team-member {
+            position: relative;
+        }
+         .preloader {
+           position: fixed;
+             top: 0;
+             left: 0;
+            width: 100%;
+           height: 100%;
+             background-color: var(--background-color);
+            display: flex;
+           justify-content: center;
+             align-items: center;
+             z-index: 10000;
+             transition: opacity 0.5s;
+       }
+         .preloader.hide {
+           opacity: 0;
+             pointer-events: none;
+       }
+        .loader {
+            border: 8px solid #333;
+             border-top: 8px solid var(--loader-color);
+            border-radius: 50%;
+             width: 60px;
+            height: 60px;
+             animation: spin 1s linear infinite;
+        }
+       @keyframes spin {
+            0% { transform: rotate(0deg); }
+             100% { transform: rotate(360deg); }
+        }
+         .progress-bar-container {
+            width: 100%;
+           height: 5px;
+            position: fixed;
+             top: 0;
+            left: 0;
+           background-color: #333;
+             z-index: 1001;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+           background-color: var(--accent-color);
+             width: 0;
+           transition: width 0.2s ease;
+         }
+    </style>
+</head>
+<body>
+    <div class="preloader" id="preloader">
+        <div class="loader"></div>
+    </div>
+      <div class="progress-bar-container" id="progressBarContainer">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <header class="header">
+         <div class="header-snowflake"></div>
+        <div class="header-snowflake"></div>
+        <div class="header-snowflake"></div>
+        <div class="container">
+            <h1 class="logo">
+                ZyroxHost
+            </h1>
+            <nav class="navbar">
+                <a href="index.html#hero">Главная</a>
+                <a href="index.html#features">Особенности</a>
+                <a href="index.html#pricing">Тарифы</a>
+                <a href="index.html#contact">Контакты</a>
+           </nav>
+         </div>
+   </header>
+    <section class="hero" id="hero">
+        <div class="container">
+            <h2 class="hero-title">Надежный хостинг Minecraft</h2>
+             <p>Откройте для себя мир безграничных возможностей с ZyroxHost — вашим проводником в надежный и стабильный мир Minecraft!</p>
+           <a href="index.html#pricing" class="btn">Выбрать тариф</a>
+             <div class="promo-banner" style="margin-top: 30px;">
+                 <h3>Новогодняя акция!</h3>
+                 <p>Успейте приобрести наши тарифы со скидкой до 15%! Акция действует до конца января.</p>
+            </div>
+       </div>
+   </section>
+     <section id="features" class="features">
+         <div class="container">
+            <h2>Почему мы?</h2>
+           <div class="features-list">
+               <div class="feature-item">
+                    <i class="fa-solid fa-microchip"></i>
+                     <div>
+                        <h3>Мощные серверы</h3>
+                         <p>Наши серверы оснащены передовым железом, обеспечивающим высочайшую производительность и стабильность для вашего Minecraft сервера.</p>
+                   </div>
+                </div>
+               <div class="feature-item">
+                    <i class="fa-solid fa-headset"></i>
+                    <div>
+                       <h3>Круглосуточная поддержка</h3>
+                         <p>Наша команда профессионалов всегда на связи, чтобы помочь вам с любым вопросом или проблемой, 24/7.</p>
+                  </div>
+                 </div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-server"></i>
+                   <div>
+                        <h3>Надёжные дата-центры</h3>
+                        <p>Ваши серверы размещаются в современных дата-центрах, гарантирующих бесперебойную работу и защиту ваших данных.</p>
+                   </div>
+                 </div>
+                 <div class="feature-item">
+                    <i class="fa-solid fa-rocket"></i>
+                     <div>
+                        <h3>Минимальный пинг</h3>
+                         <p>Благодаря оптимальному расположению серверов, мы обеспечиваем минимальный пинг для комфортной игры из любой точки мира.</p>
+                  </div>
+               </div>
+            </div>
+        </div>
+    </section>
+    <section id="pricing" class="pricing">
+        <div class="container">
+           <h2 class="h2-our-services">Наши услуги</h2>
+            <p class="subtitle-our-services">ознакомьтесь с ассортиментом наших услуг</p>
+           <h2>Тарифы</h2>
+            <div class="pricing-cards">
+                <div class="pricing-card">
+                     <i class="fa-solid fa-globe"></i>
+                    <h3>Тариф Proxy</h3>
+                     <p class="price">75 ₽ / 30 грн в месяц</p>
+                    <ul>
+                       <li><i class="fas fa-check"></i> 1 ядро</li>
+                        <li><i class="fas fa-check"></i> 2 ГБ ОЗУ</li>
+                        <li><i class="fas fa-check"></i> 10 ГБ диск</li>
+                     </ul>
+                   <a href="https://discord.gg/ddGyFJg2" class="btn" target="_blank">Купить</a>
+                </div>
+                 <div class="pricing-card">
+                    <i class="fa-solid fa-laptop"></i>
+                    <h3>Тариф Micro</h3>
+                     <p class="price">140 ₽ / 55 грн в месяц</p>
+                   <ul>
+                        <li><i class="fas fa-check"></i> 2 ядра</li>
+                        <li><i class="fas fa-check"></i> 4,2 ГБ ОЗУ</li>
+                       <li><i class="fas fa-check"></i> 20 ГБ диск</li>
+                   </ul>
+                     <a href="https://discord.gg/ddGyFJg2" class="btn" target="_blank">Купить</a>
+                </div>
+                <div class="pricing-card">
+                     <i class="fa-solid fa-globe"></i>
+                   <h3>Тариф Start</h3>
+                   <p class="price"><s>220 ₽ / 88 грн</s> <span>187 ₽ / 75 грн</span></p>
+                    <ul>
+                        <li><i class="fas fa-check"></i> 2,2 ядра</li>
+                         <li><i class="fas fa-check"></i> 5,6 ГБ ОЗУ</li>
+                       <li><i class="fas fa-check"></i> 35 ГБ диск</li>
+                    </ul>
+                   <a href="https://discord.gg/ddGyFJg2" class="btn" target="_blank">Купить</a>
+               </div>
+                 <div class="pricing-card">
+                   <i class="fa-solid fa-laptop"></i>
+                     <h3>Тариф Middle</h3>
+                   <p class="price"><s>330 ₽ / 130 грн</s> <span>280 ₽ / 110 грн</span></p>
+                    <ul>
+                       <li><i class="fas fa-check"></i> 3,2 ядра</li>
+                       <li><i class="fas fa-check"></i> 7 ГБ ОЗУ</li>
+                         <li><i class="fas fa-check"></i> 45 ГБ диск</li>
+                  </ul>
+                    <a href="https://discord.gg/ddGyFJg2" class="btn" target="_blank">Купить</a>
+               </div>
+                 <div class="pricing-card">
+                    <i class="fa-solid fa-sd-card"></i>
+                     <h3>Тариф Epic</h3>
+                   <p class="price"><s>408 ₽ / 160 грн</s> <span>347 ₽ / 136 грн</span></p>
+                    <ul>
+                       <li><i class="fas fa-check"></i> 3,5 ядра</li>
+                       <li><i class="fas fa-check"></i> 9 ГБ ОЗУ</li>
+                         <li><i class="fas fa-check"></i> 56 ГБ диск</li>
+                    </ul>
+                    <a href="https://discord.gg/ddGyFJg2" class="btn" target="_blank">Купить</a>
+                </div>
+                 <div class="pricing-card">
+                     <i class="fa-solid fa-ethernet"></i>
+                   <h3>Тариф ZYROX</h3>
+                     <p class="price"><s>530 ₽ / 220 грн</s> <span>450 ₽ / 187 грн</span></p>
+                   <ul>
+                       <li><i class="fas fa-check"></i> 4 ядра</li>
+                        <li><i class="fas fa-check"></i> 12 ГБ ОЗУ</li>
+                         <li><i class="fas fa-check"></i> 65 ГБ диск</li>
+                   </ul>
+                     <a href="https://discord.gg/ddGyFJg2" class="btn" target="_blank">Купить</a>
+                 </div>
+            </div>
+        </div>
+    </section>
+    <section id="team">
+         <div class="container">
+             <h2 style="
+                 text-align: center;
+                 margin-top: 40px;
+            ">Наша команда</h2>
+           <div class="team-members">
+                <div class="team-member active" id="member-mololo">
+                    <div class="member-info">
+                         <h3>Mololo</h3>
+                        <h4>Владелец хостинга</h4>
+                        <p>Mololo — основатель и идейный вдохновитель ZyroxHost. Он лично следит за работой Discord-сервера, обеспечивает своевременную обработку платежей и контролирует все аспекты управления хостингом. Благодаря его лидерским качествам и вниманию к деталям, ZyroxHost предоставляет качественные услуги и первоклассную поддержку.</p>
+                   </div>
+                    <div class="member-avatars">
+                         <img src="https://cdn.discordapp.com/avatars/1116038400714219631/a_721ac33030a6bfa9befdbf90ec96c836.webp?size=80" alt="Mololo" class="member-avatar active" onclick="showTeamMember('member-mololo')">
+                       <img src="https://cdn.discordapp.com/avatars/1035600455524429905/e7d1920ed9aeef6fadd0a7cb70ae00fc.png?size=512" alt="Namydev" class="member-avatar" onclick="showTeamMember('member-namydev')">
+                         <img src="https://cdn.discordapp.com/avatars/554651050812899338/43ae98da338dbaece789c911473b9c96.png?size=512" alt="Dartsash" class="member-avatar" onclick="showTeamMember('member-dartsash')">
+                  </div>
+                </div>
+                <div class="team-member" id="member-dartsash">
+                    <div class="member-info">
+                         <h3>Dartsash</h3>
+                        <h4>Второй владелец</h4>
+                         <p>Dartsash — правая рука владельца и отвечает за техническую сторону ZyroxHost. Он мастерски управляет панелью хостинга, устанавливает и настраивает аддоны, а также активно помогает пользователям в Discord, решая любые технические вопросы.</p>
+                    </div>
+                   <div class="member-avatars">
+                         <img src="https://cdn.discordapp.com/avatars/1116038400714219631/a_721ac33030a6bfa9befdbf90ec96c836.webp?size=80" alt="Mololo" class="member-avatar" onclick="showTeamMember('member-mololo')">
+                        <img src="https://cdn.discordapp.com/avatars/1035600455524429905/e7d1920ed9aeef6fadd0a7cb70ae00fc.png?size=512" alt="Namydev" class="member-avatar" onclick="showTeamMember('member-namydev')">
+                         <img src="https://cdn.discordapp.com/avatars/554651050812899338/43ae98da338dbaece789c911473b9c96.png?size=512" alt="Dartsash" class="member-avatar" onclick="showTeamMember('member-dartsash')">
+                  </div>
+                </div>
+                 <div class="team-member" id="member-namydev">
+                     <div class="member-info">
+                        <h3>Namydev</h3>
+                       <h4>Разработчик</h4>
+                         <p>Namydev — талантливый разработчик, создавший этот сайт. Он отвечает за весь функционал сайта, постоянно улучшает его, добавляет новые возможности и оперативно решает любые возникающие проблемы. Кроме того, Namydev всегда готов помочь пользователям в вопросах, связанных с работой сайта.</p>
+                    </div>
+                    <div class="member-avatars">
+                        <img src="https://cdn.discordapp.com/avatars/1116038400714219631/a_721ac33030a6bfa9befdbf90ec96c836.webp?size=80" alt="Mololo" class="member-avatar" onclick="showTeamMember('member-mololo')">
+                       <img src="https://cdn.discordapp.com/avatars/1035600455524429905/e7d1920ed9aeef6fadd0a7cb70ae00fc.png?size=512" alt="Namydev" class="member-avatar" onclick="showTeamMember('member-namydev')">
+                         <img src="https://cdn.discordapp.com/avatars/554651050812899338/43ae98da338dbaece789c911473b9c96.png?size=512" alt="Dartsash" class="member-avatar" onclick="showTeamMember('member-dartsash')">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="contact" class="contact">
+         <div class="container">
+            <h2>Контакты</h2>
+            <p>Свяжитесь с нами через Discord:</p>
+            <a href="https://discord.gg/kngvYxzvce"><i class="fab fa-discord"></i>ZyroxHost Discord</a>
+        </div>
+    </section>
+    <footer class="footer">
+        <p>© 2024 ZyroxHost.</p>
+    </footer>
+    <div class="snow-layer"></div>
+    <script>
+         const sections = document.querySelectorAll('.features, .pricing');
+        function handleScroll() {
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top < window.innerHeight - 50) {
+                    section.classList.add('visible');
+               }
+           });
+        }
+        window.addEventListener('scroll', handleScroll);
+         handleScroll();
+
+       function createSnowLayer() {
+             const snowContainer = document.querySelector('.snow-layer');
+             for (let i = 0; i < 100; i++) {
+               const snow = document.createElement('div');
+                 snow.classList.add('snow');
+                 const size = Math.random() * 30 + 15;
+                 snow.style.width = `${size}px`;
+               snow.style.height = `${size}px`;
+               const duration = Math.random() * 6 + 4;
+                snow.style.animationDuration = `${duration}s`;
+               snow.style.left = `${Math.random() * 100}vw`;
+               snow.style.top = `-${Math.random() * 10}vh`;
+                snow.style.animationDelay = `${Math.random() * duration}s`;
+              snow.style.filter = `blur(${Math.random() * 1}px)`;
+                snowContainer.appendChild(snow);
+            }
+        }
+
+       createSnowLayer();
+     </script>
+    <script>
+        document.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+        });
+     </script>
+     <script>
+        function showTeamMember(memberId) {
+            const allMembers = document.querySelectorAll('.team-member');
+             allMembers.forEach(member => member.style.display = 'none');
+             const selectedMember = document.getElementById(memberId);
+            selectedMember.style.display = 'block';
+            const allAvatars = document.querySelectorAll('.member-avatar');
+             allAvatars.forEach(avatar => avatar.classList.remove('active'));
+             const selectedAvatar = document.querySelector(`#${memberId} .member-avatar[onclick*="${memberId}"]`);
+            if (selectedAvatar) {
+                 selectedAvatar.classList.add('active');
+            }
+         }
+        document.addEventListener('DOMContentLoaded', function() {
+            showTeamMember('member-mololo');
+            document.getElementById('preloader').classList.add('hide');
+        });
+   </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+             const preloader = document.getElementById('preloader');
+             preloader.classList.add('hide');
+             setTimeout(() => {
+                preloader.style.display = 'none';
+          }, 500);
+        });
+    </script>
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+            const hero = document.querySelector('.hero');
+            let lastScrollTop = 0;
+            window.addEventListener('scroll', function() {
+                let scrollTop = window.scrollY || document.documentElement.scrollTop;
+               hero.style.backgroundPositionY = `${-scrollTop / 2}px`;
+            });
+            const pricingCards = document.querySelectorAll('.pricing-card');
+            pricingCards.forEach(card => {
+                card.addEventListener('mousemove', function(event) {
+                   const cardRect = this.getBoundingClientRect();
+                     const centerX = cardRect.left + cardRect.width / 2;
+                   const centerY = cardRect.top + cardRect.height / 2;
+                     const mouseX = event.clientX;
+                     const mouseY = event.clientY;
+                     const rotateX = (mouseY - centerY) / 20;
+                    const rotateY = (mouseX - centerX) / 20;
+                   this.style.transform = `scale(1.03) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                });
+                 card.addEventListener('mouseleave', function() {
+                  this.style.transform = 'scale(1) rotateX(0) rotateY(0)';
+                 });
+            });
+           const teamMembers = document.querySelectorAll('.team-member');
+             teamMembers.forEach(card => {
+                card.addEventListener('mousemove', function(event) {
+                   this.style.boxShadow = '0 5px 20px rgba(0, 188, 212, 0.7), 0 0 15px rgba(0, 188, 212, 0.5)';
+                });
+               card.addEventListener('mouseleave', function() {
+                  this.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.2)';
+                });
+            });
+         });
+    </script>
+      <script>
+          const progressBarContainer = document.getElementById('progressBarContainer');
+          const progressBar = document.getElementById('progressBar');
+            function updateProgressBar() {
+              const windowHeight = window.innerHeight;
+               const scrollHeight = document.documentElement.scrollHeight - windowHeight;
+                const scrollTop = window.scrollY;
+                const progress = (scrollTop / scrollHeight) * 100;
+                 progressBar.style.width = `${progress}%`;
+                if (progress > 0 && scrollHeight > 0) {
+                    progressBarContainer.style.display = 'block';
+                } else {
+                    progressBarContainer.style.display = 'none';
+                }
+          }
+           window.addEventListener('scroll', updateProgressBar);
+          window.addEventListener('load', updateProgressBar);
+     </script>
+</body>
+</html>
