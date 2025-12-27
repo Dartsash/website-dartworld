@@ -237,7 +237,7 @@ if (isset($_SESSION['username'])) {
             </div>
         <?php endif; ?>
         
-        <form id="resetForm" action="send_reset.php" method="POST">
+        <form id="resetForm" action="send_reset" method="POST">
             <div class="form-group">
                 <label for="email">Enter your email:</label>
                 <input type="email" id="email" name="email" required autofocus>
