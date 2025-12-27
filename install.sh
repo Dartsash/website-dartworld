@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_URL="https://github.com/Dartsash/website-dartworld.git"
 BRANCH="main"
 
-# как у тебя в конфиге
+# как у тебя
 WEBROOT="/var/www/site"
 
 red() { echo -e "\033[31m$*\033[0m"; }
@@ -33,23 +33,21 @@ ask_yn() {
 }
 
 detect_php_sock() {
-  # Берём самый “новый” сокет php-fpm (8.3 > 8.2 > 8.1, и т.д.)
   local sock
   sock="$(ls -1 /run/php/php*-fpm.sock 2>/dev/null | sort -V | tail -n1 || true)"
   echo "$sock"
 }
 
-write_nginx_http_only() {
-  # HTTP-only конфиг (нужен, чтобы certbot смог получить сертификат через webroot)
+write_nginx_http_only_for_cert() {
+  # HTTP-only конфиг (без редиректа) — чтобы certbot webroot смог пройти challenge на домен
   local domain="$1"
-  local www_domain="$2"
-  local php_sock="$3"
+  local php_sock="$2"
   local conf="/etc/nginx/sites-available/${domain}.conf"
 
   cat > "$conf" <<EOF
 server {
     listen 80;
-    server_name ${domain} ${www_domain};
+    server_name ${domain};
 
     root ${WEBROOT};
     index index.php index.html;
@@ -67,16 +65,22 @@ server {
 
     location ~ /\.ht { deny all; }
 }
+
+# optional: http www -> https apex (без сертификата для www)
+server {
+    listen 80;
+    server_name www.${domain};
+    return 301 https://${domain}\$request_uri;
+}
 EOF
 
   ln -sf "$conf" "/etc/nginx/sites-enabled/${domain}.conf"
 }
 
-write_nginx_https_with_redirect_exact() {
-  # ТВОЙ конфиг: 80 редирект → https, и 443 ssl с редиректом .php → без .php
+write_nginx_https_apex_only_exact() {
+  # ТВОЙ стиль: 80 -> https, 443 ssl только на apex-домен, убираем .php
   local domain="$1"
-  local www_domain="$2"
-  local php_sock="$3"
+  local php_sock="$2"
   local conf="/etc/nginx/sites-available/${domain}.conf"
 
   cat > "$conf" <<EOF
@@ -86,9 +90,16 @@ server {
     return 301 https://\$host\$request_uri;
 }
 
+# optional: http www -> https apex (www без сертификата!)
+server {
+    listen 80;
+    server_name www.${domain};
+    return 301 https://${domain}\$request_uri;
+}
+
 server {
     listen 443 ssl;
-    server_name ${domain} ${www_domain};
+    server_name ${domain};
 
     root ${WEBROOT};
     index index.php index.html;
@@ -129,42 +140,29 @@ main() {
   echo "Webroot: ${WEBROOT}"
   echo "========================================"
 
-  local use_domain="no"
   local domain=""
-  local www_domain=""
   local install_db="no"
   local install_ssl="no"
   local email=""
 
   if ask_yn "Do you want to set a domain for the site?"; then
-    use_domain="yes"
     read -rp "Enter domain (example: dartworld.pro): " domain
     domain="${domain,,}"
     [[ -z "$domain" ]] && { red "Domain is empty."; exit 1; }
-
-    # www алиас как у тебя: www.domain
-    if [[ "$domain" == www.* ]]; then
-      www_domain="$domain"
-      domain="${domain#www.}"
-      www_domain="www.${domain}"
-    else
-      www_domain="www.${domain}"
-    fi
+    # если ввели www.домен — отрежем www.
+    domain="${domain#www.}"
 
     if ask_yn "Install MariaDB (database server) too?"; then
       install_db="yes"
     fi
 
-    if ask_yn "Setup HTTPS (Let's Encrypt) now?"; then
+    if ask_yn "Setup HTTPS (Let's Encrypt) now? (ONLY for apex domain, without www)"; then
       install_ssl="yes"
       read -rp "Email for Let's Encrypt (required): " email
       [[ -z "$email" ]] && { red "Email is empty."; exit 1; }
     fi
   else
-    # без домена — ставим только HTTP на IP (без SSL и без редиректа)
-    use_domain="no"
     domain="default-site"
-    www_domain="_"
     install_ssl="no"
 
     if ask_yn "Install MariaDB (database server) too?"; then
@@ -177,7 +175,7 @@ main() {
   echo " - Install: nginx, php-fpm, git, curl"
   [[ "$install_db" == "yes" ]] && echo " - Install: mariadb-server + php-mysql"
   echo " - Deploy repo to: ${WEBROOT}"
-  [[ "$install_ssl" == "yes" ]] && echo " - Get SSL for: ${domain}, ${www_domain}"
+  [[ "$install_ssl" == "yes" ]] && echo " - Get SSL for: ${domain} (NO www)"
   echo
 
   if ! ask_yn "Are you sure you want to install now?"; then
@@ -227,12 +225,8 @@ main() {
   ylw "[4/7] Nginx config..."
   rm -f /etc/nginx/sites-enabled/default || true
 
-  if [[ "$use_domain" == "yes" ]]; then
-    # сначала поднимем HTTP-only, чтобы certbot мог получить сертификат
-    write_nginx_http_only "$domain" "$www_domain" "$php_sock"
-  else
-    # без домена: HTTP-only catch-all
-    # просто используем server_name _ чтобы открывалось по IP
+  if [[ "$domain" == "default-site" ]]; then
+    # без домена: HTTP-only catch-all по IP
     cat > "/etc/nginx/sites-available/${domain}.conf" <<EOF
 server {
     listen 80;
@@ -255,6 +249,9 @@ server {
 }
 EOF
     ln -sf "/etc/nginx/sites-available/${domain}.conf" "/etc/nginx/sites-enabled/${domain}.conf"
+  else
+    # домен: для SSL делаем сначала HTTP-only (без редиректа), чтобы certbot прошёл
+    write_nginx_http_only_for_cert "$domain" "$php_sock"
   fi
 
   nginx -t
@@ -266,36 +263,33 @@ EOF
 
   if [[ "$install_ssl" == "yes" ]]; then
     echo
-    ylw "[6/7] Getting SSL certificate (webroot method)..."
+    ylw "[6/7] Getting SSL certificate (ONLY apex domain, NO www)..."
     apt install -y certbot
 
-    # Получаем сертификат без изменения nginx-конфига
     certbot certonly --webroot -w "$WEBROOT" \
-      -d "$domain" -d "$www_domain" \
+      -d "$domain" \
       --non-interactive --agree-tos -m "$email" || {
-        red "Certbot failed. Usually: DNS not pointing to this VM yet OR ports 80/443 closed."
-        red "You can retry later after DNS is correct and ports open."
+        red "Certbot failed. Обычно: DNS домена не указывает на VM или закрыт порт 80."
         exit 1
       }
 
-    # После сертификата — пишем ТВОЙ exact конфиг (80 redirect + 443 ssl)
-    write_nginx_https_with_redirect_exact "$domain" "$www_domain" "$php_sock"
+    # после сертификата ставим твой final-конфиг (443 только для apex)
+    write_nginx_https_apex_only_exact "$domain" "$php_sock"
     nginx -t
     systemctl reload nginx
 
-    # Certbot обычно сам ставит systemd timer, но на всякий:
     systemctl enable --now certbot.timer >/dev/null 2>&1 || true
   fi
 
   echo
   grn "[7/7] Done!"
-  if [[ "$use_domain" == "yes" ]]; then
+  if [[ "$domain" != "default-site" ]]; then
     if [[ "$install_ssl" == "yes" ]]; then
       echo "Open: https://${domain}"
+      echo "Note: https://www.${domain} will NOT work (no cert). http://www.${domain} redirects to https://${domain}"
     else
       echo "Open: http://${domain}"
     fi
-    echo "Also: ${www_domain}"
   else
     echo "Open your VM External IP via HTTP."
   fi
