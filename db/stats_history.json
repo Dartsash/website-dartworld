@@ -1,0 +1,42 @@
+[
+    {
+        "ts": 1765717751,
+        "totalUsers": 2,
+        "totalClicks": 106,
+        "activeUsers": 1,
+        "top": {
+            "dartsash": 106,
+            "hahiolog": 0
+        }
+    },
+    {
+        "ts": 1765723355,
+        "totalUsers": 2,
+        "totalClicks": 112,
+        "activeUsers": 1,
+        "top": {
+            "dartsash": 112,
+            "hahiolog": 0
+        }
+    },
+    {
+        "ts": 1765724751,
+        "totalUsers": 2,
+        "totalClicks": 134,
+        "activeUsers": 1,
+        "top": {
+            "dartsash": 134,
+            "hahiolog": 0
+        }
+    },
+    {
+        "ts": 1765725405,
+        "totalUsers": 2,
+        "totalClicks": 224,
+        "activeUsers": 2,
+        "top": {
+            "dartsash": 200,
+            "hahiolog": 24
+        }
+    }
+]
