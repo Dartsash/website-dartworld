@@ -16,34 +16,51 @@ if (isset($_SESSION['username'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Проверка reCAPTCHA
-    $recaptcha_secret = '6Ld2EwkqAAAAAC1FLfdSaMhMaFkGYLPLWLKoaUI9';
-    $response = $_POST['g-recaptcha-response'] ?? '';
+    // Проверка cloudflare
+    $turnstile_secret = '0x4AAAAAAB45cWww5qTiArcCF3C_kWY3Rgs';
+    $turnstile_response = $_POST['cf-turnstile-response'] ?? '';
     
-    $url = 'https://www.google.com/recaptcha/api/siteverify';
-    $data = ['secret' => $recaptcha_secret, 'response' => $response];
-    
-    $options = [
-        'http' => [
-            'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-            'method' => 'POST',
-            'content' => http_build_query($data)
-        ]
+if (empty($turnstile_response)) {
+    $_SESSION['error'] = [
+        'type' => 'captcha',
+        'message' => 'Please complete the CAPTCHA verification.',
+        'shake' => true
     ];
+    header("Location: register.php");
+    exit;
+}
+
+
+$verify_url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+$verify_data = http_build_query([
+    'secret'   => $turnstile_secret,
+    'response' => $turnstile_response,
+    'remoteip' => $_SERVER['REMOTE_ADDR'] ?? null,
+]);
     
-    $context = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-    $reCaptchaResult = json_decode($result);
+$opts = [
+    'http' => [
+        'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+        'method'  => 'POST',
+        'content' => $verify_data,
+        'timeout' => 10,
+    ]
+];
     
-    if (!$reCaptchaResult->success) {
-        $_SESSION['error'] = [
-            'type' => 'captcha',
-            'message' => 'Please complete the CAPTCHA verification.',
-            'shake' => true
-        ];
-        header("Location: register.php");
-        exit;
-    }
+$context = stream_context_create($opts);
+$verify_result = file_get_contents($verify_url, false, $context);
+$turnstile = json_decode($verify_result, true);
+    
+if (empty($turnstile['success'])) {
+    // можно вывести ошибки: $turnstile['error-codes'] (для отладки)
+    $_SESSION['error'] = [
+        'type' => 'captcha',
+        'message' => 'CAPTCHA failed. Please try again.',
+        'shake' => true
+    ];
+    header("Location: register.php");
+    exit;
+}
     
     $username = $_POST['username'];
     $email = $_POST['email'];
@@ -72,8 +89,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     
-    $usersFile = '../db/users.json';
-    $users = file_exists($usersFile) ? json_decode(file_get_contents($usersFile), true) : [];
+$usersFile = __DIR__ . '/../db/users.json';
+
+if (!is_dir(dirname($usersFile))) {
+    mkdir(dirname($usersFile), 0775, true);
+}
+
+if (!file_exists($usersFile)) {
+    file_put_contents($usersFile, "{}");
+}
+
+$raw = file_get_contents($usersFile);
+$users = json_decode($raw ?: "{}", true);
+if (!is_array($users)) $users = [];
+
+$raw = file_get_contents($usersFile);
+$users = json_decode($raw ?: "{}", true);
+if (!is_array($users)) $users = [];
     
     if (isset($users[$username])) {
         $_SESSION['error'] = [
@@ -107,7 +139,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'registered_at' => date('Y-m-d H:i:s')
     ];
     
-    file_put_contents($usersFile, json_encode($users, JSON_PRETTY_PRINT));
+$json = json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+if ($json === false) {
+    die("JSON encode error: " . json_last_error_msg());
+}
+
+$bytes = file_put_contents($usersFile, $json, LOCK_EX);
+if ($bytes === false) {
+    die("Write users.json failed: " . print_r(error_get_last(), true));
+}
+
     
     $_SESSION['username'] = $username;
     header("Location: loading.html");
@@ -301,13 +342,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
     <div class="register-container <?php echo isset($_SESSION['error']['shake']) && $_SESSION['error']['shake'] ? 'shake' : '' ?>">
         <h2>Create Account</h2>
         
-        <form action="register.php" method="post">
+        <form action="register" method="post">
             <div class="input-group <?php echo isset($_SESSION['error']['field']) && $_SESSION['error']['field'] === 'username' ? 'error' : '' ?>">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required 
@@ -345,7 +386,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
             
-            <div class="g-recaptcha" data-sitekey="6Ld2EwkqAAAAAOcmywRpqu63j79Sr562Q_nSF9_n"></div>
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAAB45cQuBnJG8zc86"></div>
             
             <div class="error-message <?php 
                 echo (isset($_SESSION['error']['type']) && 
