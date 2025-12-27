@@ -1,6 +1,7 @@
 <?php
 session_start();
-// Устанавливаем язык по умолчанию
+
+// Язык по умолчанию
 if (!isset($_SESSION['language'])) {
     $_SESSION['language'] = 'ru';
 }
@@ -38,64 +39,63 @@ $translations = [
 ];
 
 $lang = $_SESSION['language'];
+if (!isset($translations[$lang])) {
+    $lang = 'ru';
+    $_SESSION['language'] = 'ru';
+}
 $trans = $translations[$lang];
 
-// Проверка бана перед всеми другими проверками
-if (isset($_SESSION['username'])) {
-    $usersFile = $_SERVER['DOCUMENT_ROOT'] . '/db/users.json';
-    if (file_exists($usersFile)) {
-        $users = json_decode(file_get_contents($usersFile), true);
-        $currentUser = $users[$_SESSION['username']] ?? null;
-        
-        if ($currentUser && ($currentUser['banned'] ?? false)) {
-            header("Location: /bans.php");
-            exit;
-        }
-    }
+// Надёжный путь к users.json (index.php лежит в корне сайта)
+$usersFile = __DIR__ . '/db/users.json';
+
+function loadUsers(string $path): array {
+    if (!file_exists($path)) return [];
+    $raw = file_get_contents($path);
+    if ($raw === false) return [];
+    $data = json_decode($raw, true);
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) return [];
+    return $data;
 }
 
 // Проверка авторизации
 if (!isset($_SESSION['username'])) {
     header("Location: /auth/login.php");
-    exit();
+    exit;
 }
 
-// Проверка прав администратора
-function isAdmin($username) {
-    $filePath = $_SERVER['DOCUMENT_ROOT'] . '/db/users.json';
-    if (file_exists($filePath)) {
-        $users = json_decode(file_get_contents($filePath), true);
-        return isset($users[$username]['admin']) && $users[$username]['admin'] === true;
-    }
-    return false;
+$users = loadUsers($usersFile);
+$username = (string)$_SESSION['username'];
+$currentUser = $users[$username] ?? null;
+
+// Проверка бана
+if ($currentUser && ($currentUser['banned'] ?? false)) {
+    header("Location: /bans.php");
+    exit;
 }
 
-$isAdmin = isAdmin($_SESSION['username']);
+// Админ?
+$isAdmin = (bool)($currentUser['admin'] ?? false);
 
-// Функция для загрузки игроков
-function loadPlayers() {
-    $filePath = $_SERVER['DOCUMENT_ROOT'] . '/db/users.json';
-    if (file_exists($filePath)) {
-        $data = json_decode(file_get_contents($filePath), true);
-        if ($data) {
-            $players = [];
-            foreach ($data as $username => $userData) {
-                if (isset($userData['clicks'])) {
-                    $players[] = [
-                        'username' => $username,
-                        'clicks' => $userData['clicks'],
-                        'level' => floor($userData['clicks'] / 1000) + 1
-                    ];
-                }
-            }
-            return $players;
+// Таблица лидеров
+function loadPlayersFromUsers(array $users): array {
+    $players = [];
+    foreach ($users as $uname => $userData) {
+        if (is_array($userData) && isset($userData['clicks'])) {
+            $clicks = (int)$userData['clicks'];
+            $players[] = [
+                'username' => (string)$uname,
+                'clicks' => $clicks,
+                'level' => intdiv($clicks, 1000) + 1
+            ];
         }
     }
-    return false;
+    return $players;
 }
+
+$players = loadPlayersFromUsers($users);
 ?>
 <!DOCTYPE html>
-<html lang="<?php echo $lang; ?>">
+<html lang="<?php echo htmlspecialchars($lang); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -105,6 +105,7 @@ function loadPlayers() {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Orbitron:wght@600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
             --primary: #6e00ff;
@@ -116,11 +117,7 @@ function loadPlayers() {
             --neon-glow-hover: 0 0 15px rgba(110, 0, 255, 0.9), 0 0 30px rgba(110, 0, 255, 0.7);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Montserrat', sans-serif;
@@ -130,18 +127,18 @@ function loadPlayers() {
         }
 
         .header {
-             background: rgba(15, 15, 26, 0.8);
-             backdrop-filter: blur(10px);
-             padding: 1rem 2rem;
-             display: grid;
-             grid-template-columns: 1fr auto 1fr;
-             align-items: center;
-             position: fixed;
-             width: 100%;
-             top: 0;
-             z-index: 1000;
-             border-bottom: 1px solid rgba(110, 0, 255, 0.3);
-             animation: fadeInDown 0.5s ease-out;
+            background: rgba(15, 15, 26, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(110, 0, 255, 0.3);
+            animation: fadeInDown 0.5s ease-out;
         }
 
         .logo {
@@ -150,12 +147,12 @@ function loadPlayers() {
             font-size: 1.8rem;
             font-weight: 600;
             background: linear-gradient(90deg, var(--primary), var(--secondary));
-           -webkit-background-clip: text;
-           background-clip: text;
-           color: transparent;
-           text-shadow: var(--neon-glow);
-           letter-spacing: 1px;
-       }
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: var(--neon-glow);
+            letter-spacing: 1px;
+        }
 
         .nav-links {
             justify-self: center;
@@ -175,30 +172,14 @@ function loadPlayers() {
             gap: 0.5rem;
         }
 
-        .nav-links a:hover {
-            color: var(--secondary);
-        }
+        .nav-links a:hover { color: var(--secondary); }
 
-        .admin-link {
-            color: var(--secondary) !important;
-            font-weight: 700;
-        }
+        .admin-link { color: var(--secondary) !important; font-weight: 700; }
+        .admin-link i { color: gold; }
 
-        .admin-link i {
-            color: gold;
-        }
+        .user-section { justify-self: end; display: flex; align-items: center; }
 
-        .user-section {
-            justify-self: end;
-            display: flex;
-            align-items: center;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-        }
+        .user-info { display: flex; align-items: center; gap: 0.8rem; }
 
         .user-info .username {
             font-weight: 600;
@@ -207,10 +188,7 @@ function loadPlayers() {
             margin-right: 0.5rem;
         }
 
-        .user-dropdown {
-            position: relative;
-            display: inline-block;
-        }
+        .user-dropdown { position: relative; display: inline-block; }
 
         .avatar {
             width: 40px;
@@ -225,12 +203,10 @@ function loadPlayers() {
             cursor: pointer;
             transition: all 0.3s;
             box-shadow: var(--neon-glow);
+            user-select: none;
         }
 
-        .avatar:hover {
-            transform: scale(1.1);
-            box-shadow: var(--neon-glow-hover);
-        }
+        .avatar:hover { transform: scale(1.1); box-shadow: var(--neon-glow-hover); }
 
         .dropdown-content {
             display: none;
@@ -249,7 +225,6 @@ function loadPlayers() {
 
         .dropdown-content a {
             color: var(--light);
-            padding: 0.5rem 0;
             text-decoration: none;
             display: block;
             transition: all 0.2s;
@@ -290,20 +265,11 @@ function loadPlayers() {
             box-shadow: 0 0 10px rgba(255, 0, 64, 0.5);
         }
 
-        .dropdown-content i {
-            width: 20px;
-            text-align: center;
-            margin-right: 0.5rem;
-        }
+        .dropdown-content i { width: 20px; text-align: center; margin-right: 0.5rem; }
 
-        .show {
-            display: block;
-        }
+        .show { display: block; }
 
-        .main-content {
-            padding-top: 6rem;
-            min-height: 100vh;
-        }
+        .main-content { padding-top: 6rem; min-height: 100vh; }
 
         .hero-section {
             text-align: center;
@@ -315,10 +281,8 @@ function loadPlayers() {
         .hero-section::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(15, 15, 26, 0.7);
             z-index: 0;
         }
@@ -328,9 +292,7 @@ function loadPlayers() {
             z-index: 1;
             max-width: 800px;
             margin: 0 auto;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.8s ease-out 0.3s forwards;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
         }
 
         h1 {
@@ -347,9 +309,7 @@ function loadPlayers() {
             font-size: 1.2rem;
             margin-bottom: 2rem;
             opacity: 0.9;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.8s ease-out 0.5s forwards;
+            animation: fadeInUp 0.8s ease-out 0.5s both;
         }
 
         .enter-btn {
@@ -361,9 +321,7 @@ function loadPlayers() {
             border-radius: 50px;
             cursor: pointer;
             transition: all 0.3s;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.8s ease-out 0.7s forwards;
+            animation: fadeInUp 0.8s ease-out 0.7s both;
         }
 
         .enter-btn:hover {
@@ -380,9 +338,7 @@ function loadPlayers() {
             border-radius: 15px;
             border: 1px solid rgba(110, 0, 255, 0.4);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.8s ease-out 0.9s forwards;
+            animation: fadeInUp 0.8s ease-out 0.9s both;
         }
 
         .leaderboard-title {
@@ -394,9 +350,7 @@ function loadPlayers() {
             text-shadow: var(--neon-glow);
         }
 
-        .leaderboard-list {
-            list-style: none;
-        }
+        .leaderboard-list { list-style: none; }
 
         .leaderboard-item {
             display: flex;
@@ -406,15 +360,13 @@ function loadPlayers() {
             background: rgba(40, 40, 60, 0.6);
             border-radius: 10px;
             transition: all 0.3s;
-            opacity: 0;
-            transform: translateY(10px);
         }
 
-        .leaderboard-item:nth-child(1) { animation: fadeInUp 0.5s ease-out 1.1s forwards; }
-        .leaderboard-item:nth-child(2) { animation: fadeInUp 0.5s ease-out 1.2s forwards; }
-        .leaderboard-item:nth-child(3) { animation: fadeInUp 0.5s ease-out 1.3s forwards; }
-        .leaderboard-item:nth-child(4) { animation: fadeInUp 0.5s ease-out 1.4s forwards; }
-        .leaderboard-item:nth-child(5) { animation: fadeInUp 0.5s ease-out 1.5s forwards; }
+        .leaderboard-item:nth-child(1) { animation: fadeInUp 0.5s ease-out 1.1s both; }
+        .leaderboard-item:nth-child(2) { animation: fadeInUp 0.5s ease-out 1.2s both; }
+        .leaderboard-item:nth-child(3) { animation: fadeInUp 0.5s ease-out 1.3s both; }
+        .leaderboard-item:nth-child(4) { animation: fadeInUp 0.5s ease-out 1.4s both; }
+        .leaderboard-item:nth-child(5) { animation: fadeInUp 0.5s ease-out 1.5s both; }
 
         .leaderboard-item:hover {
             background: rgba(110, 0, 255, 0.25);
@@ -422,12 +374,7 @@ function loadPlayers() {
             box-shadow: 0 5px 15px rgba(110, 0, 255, 0.3);
         }
 
-        .player-rank {
-            font-weight: bold;
-            width: 40px;
-            text-align: center;
-            font-size: 1.2rem;
-        }
+        .player-rank { font-weight: bold; width: 40px; text-align: center; font-size: 1.2rem; }
 
         .player-avatar {
             width: 40px;
@@ -441,25 +388,11 @@ function loadPlayers() {
             font-weight: bold;
         }
 
-        .player-info {
-            flex-grow: 1;
-        }
+        .player-info { flex-grow: 1; }
+        .player-name { font-weight: 600; }
+        .player-level { font-size: 0.8rem; opacity: 0.7; }
 
-        .player-name {
-            font-weight: 600;
-        }
-
-        .player-level {
-            font-size: 0.8rem;
-            opacity: 0.7;
-        }
-
-        .player-score {
-            font-weight: bold;
-            color: var(--secondary);
-            min-width: 100px;
-            text-align: right;
-        }
+        .player-score { font-weight: bold; color: var(--secondary); min-width: 100px; text-align: right; }
 
         .top-1 { border-left: 4px solid gold; }
         .top-2 { border-left: 4px solid silver; }
@@ -469,12 +402,7 @@ function loadPlayers() {
         .top-2 .player-rank { color: silver; text-shadow: 0 0 8px silver; }
         .top-3 .player-rank { color: #cd7f32; text-shadow: 0 0 8px #cd7f32; }
 
-        .no-players, .error-loading {
-            text-align: center;
-            padding: 2rem;
-            opacity: 0.7;
-            animation: fadeIn 0.5s ease-out;
-        }
+        .no-players, .error-loading { text-align: center; padding: 2rem; opacity: 0.7; animation: fadeIn 0.5s ease-out; }
 
         .footer {
             text-align: center;
@@ -484,164 +412,150 @@ function loadPlayers() {
             animation: fadeIn 0.5s ease-out;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         @keyframes fadeInUp {
-            from { 
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to { 
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeInDown {
-            from { 
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to { 
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         @media (max-width: 768px) {
-            h1 {
-                font-size: 2.5rem;
-            }
-            
-            .hero-section {
-                padding: 4rem 1rem;
-            }
-            
-            .leaderboard-section {
-                padding: 1.5rem;
-                margin: 2rem auto;
-            }
-            
-            .nav-links {
-                gap: 1rem;
-                font-size: 0.9rem;
-            }
+            h1 { font-size: 2.5rem; }
+            .hero-section { padding: 4rem 1rem; }
+            .leaderboard-section { padding: 1.5rem; margin: 2rem auto; }
+            .nav-links { gap: 1rem; font-size: 0.9rem; }
+            .user-info .username { display: none; }
+        }
 
-            .user-info .username {
-                display: none;
-            }
+        /* Если у пользователя включено "уменьшить движения" — не скрываем контент */
+        @media (prefers-reduced-motion: reduce) {
+            * { animation: none !important; transition: none !important; }
         }
     </style>
 </head>
+
 <body>
-    <header class="header">
-        <div class="logo">DartWorld</div>
-        <nav class="nav-links">
-            <a href="https://discord.gg/zxSVV4UZD4">
-                <i class="fab fa-discord"></i> <?php echo $trans['discord']; ?>
+<header class="header">
+    <div class="logo">DartWorld</div>
+
+    <nav class="nav-links">
+        <a href="https://discord.gg/zxSVV4UZD4">
+            <i class="fab fa-discord"></i> <?php echo htmlspecialchars($trans['discord']); ?>
+        </a>
+        <a href="settings.php">
+            <i class="fas fa-cog"></i> <?php echo htmlspecialchars($trans['settings']); ?>
+        </a>
+
+        <?php if ($isAdmin): ?>
+            <a href="admin/" class="admin-link">
+                <i class="fas fa-crown"></i> <?php echo htmlspecialchars($trans['admin_panel']); ?>
             </a>
-            <a href="settings.php">
-                <i class="fas fa-cog"></i> <?php echo $trans['settings']; ?>
-            </a>
-            <?php if ($isAdmin): ?>
-                <a href="admin/" class="admin-link">
-                    <i class="fas fa-crown"></i> <?php echo $trans['admin_panel']; ?>
-                </a>
-            <?php endif; ?>
-        </nav>
-        <div class="user-section">
-            <div class="user-info">
-                <div class="user-dropdown">
-                    <div class="avatar" onclick="toggleDropdown()">
-                        <?php echo mb_substr(htmlspecialchars($_SESSION['username']), 0, 1); ?>
-                    </div>
-                    <div class="dropdown-content" id="dropdownContent">
-                        <span class="username"><?php echo $trans['logged_in_as'] . ' ' . htmlspecialchars($_SESSION['username']); ?></span>
-                        <a href="settings.php"><i class="fas fa-cog"></i> <?php echo $trans['settings']; ?></a>
-                        <?php if ($isAdmin): ?>
-                            <a href="admin/"><i class="fas fa-crown"></i> <?php echo $trans['admin_panel']; ?></a>
-                        <?php endif; ?>
-                        <form method="post" action="logout.php">
-                            <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> <?php echo $trans['logout']; ?></button>
-                        </form>
-                    </div>
+        <?php endif; ?>
+    </nav>
+
+    <div class="user-section">
+        <div class="user-info">
+            <div class="user-dropdown" id="userDropdown">
+                <div class="avatar" onclick="toggleDropdown()">
+                    <?php
+                    $first = function_exists('mb_substr')
+                        ? mb_substr(htmlspecialchars($username), 0, 1)
+                        : substr(htmlspecialchars($username), 0, 1);
+                    echo $first;
+                    ?>
                 </div>
-                <span class="username"><?php echo htmlspecialchars($_SESSION['username']); ?></span>
+
+                <div class="dropdown-content" id="dropdownContent">
+                    <span class="username">
+                        <?php echo htmlspecialchars($trans['logged_in_as'] . ' ' . $username); ?>
+                    </span>
+
+                    <a href="settings.php"><i class="fas fa-cog"></i> <?php echo htmlspecialchars($trans['settings']); ?></a>
+
+                    <?php if ($isAdmin): ?>
+                        <a href="admin/"><i class="fas fa-crown"></i> <?php echo htmlspecialchars($trans['admin_panel']); ?></a>
+                    <?php endif; ?>
+
+                    <form method="post" action="logout.php">
+                        <button type="submit" class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> <?php echo htmlspecialchars($trans['logout']); ?>
+                        </button>
+                    </form>
+                </div>
             </div>
+
+            <span class="username"><?php echo htmlspecialchars($username); ?></span>
         </div>
-    </header>
+    </div>
+</header>
 
-    <main class="main-content">
-        <section class="hero-section">
-            <div class="hero-content">
-                <h1><?php echo $trans['welcome']; ?></h1>
-                <p class="hero-text"><?php echo $trans['motivating_clicker']; ?></p>
-                <button class="enter-btn" onclick="location.href='/clicker/click.php'"><?php echo $trans['enter']; ?></button>
-            </div>
-        </section>
+<main class="main-content">
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1><?php echo htmlspecialchars($trans['welcome']); ?></h1>
+            <p class="hero-text"><?php echo htmlspecialchars($trans['motivating_clicker']); ?></p>
+            <button class="enter-btn" onclick="location.href='/clicker/click.php'">
+                <?php echo htmlspecialchars($trans['enter']); ?>
+            </button>
+        </div>
+    </section>
 
-        <section class="leaderboard-section">
-            <h2 class="leaderboard-title"><?php echo $trans['top_players']; ?></h2>
-            <div class="leaderboard-container">
-                <?php
-                $players = loadPlayers();
-                if ($players && count($players) > 0) {
-                    usort($players, function($a, $b) {
-                        return $b['clicks'] - $a['clicks'];
-                    });
-                    
-                    echo '<ul class="leaderboard-list">';
-                    foreach (array_slice($players, 0, 5) as $index => $player) {
-                        $rank = $index + 1;
-                        $rankClass = $rank <= 3 ? "top-$rank" : "";
-                        $firstLetter = mb_substr($player['username'], 0, 1);
-                        
-                        echo '<li class="leaderboard-item ' . $rankClass . '">';
-                        echo '<div class="player-rank">#' . $rank . '</div>';
-                        echo '<div class="player-avatar">' . $firstLetter . '</div>';
-                        echo '<div class="player-info">';
-                        echo '<div class="player-name">' . htmlspecialchars($player['username']) . '</div>';
-                        echo '<div class="player-level">' . $trans['level'] . ' ' . $player['level'] . '</div>';
-                        echo '</div>';
-                        echo '<div class="player-score">' . number_format($player['clicks']) . '</div>';
-                        echo '</li>';
-                    }
-                    echo '</ul>';
-                } elseif ($players === false) {
-                    echo '<p class="error-loading">' . $trans['error_loading'] . '</p>';
-                } else {
-                    echo '<p class="no-players">' . $trans['no_players'] . '</p>';
+    <section class="leaderboard-section">
+        <h2 class="leaderboard-title"><?php echo htmlspecialchars($trans['top_players']); ?></h2>
+
+        <div class="leaderboard-container">
+            <?php
+            if (count($players) > 0) {
+                usort($players, fn($a, $b) => $b['clicks'] <=> $a['clicks']);
+
+                echo '<ul class="leaderboard-list">';
+                foreach (array_slice($players, 0, 5) as $index => $player) {
+                    $rank = $index + 1;
+                    $rankClass = $rank <= 3 ? "top-$rank" : "";
+                    $firstLetter = function_exists('mb_substr')
+                        ? mb_substr($player['username'], 0, 1)
+                        : substr($player['username'], 0, 1);
+
+                    echo '<li class="leaderboard-item ' . htmlspecialchars($rankClass) . '">';
+                    echo '<div class="player-rank">#' . $rank . '</div>';
+                    echo '<div class="player-avatar">' . htmlspecialchars($firstLetter) . '</div>';
+                    echo '<div class="player-info">';
+                    echo '<div class="player-name">' . htmlspecialchars($player['username']) . '</div>';
+                    echo '<div class="player-level">' . htmlspecialchars($trans['level']) . ' ' . (int)$player['level'] . '</div>';
+                    echo '</div>';
+                    echo '<div class="player-score">' . number_format((int)$player['clicks']) . '</div>';
+                    echo '</li>';
                 }
-                ?>
-            </div>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <p>© DartWorld 2022-2025 | All rights reserved</p>
-    </footer>
-
-    <script>
-        function toggleDropdown() {
-            const dropdown = document.getElementById('dropdownContent');
-            dropdown.classList.toggle('show');
-        }
-
-        // Закрыть выпадающее меню при клике вне его
-        window.onclick = function(event) {
-            if (!event.target.matches('.avatar')) {
-                const dropdowns = document.getElementsByClassName('dropdown-content');
-                for (let i = 0; i < dropdowns.length; i++) {
-                    const openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
-                }
+                echo '</ul>';
+            } else {
+                echo '<p class="no-players">' . htmlspecialchars($trans['no_players']) . '</p>';
             }
+            ?>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <p>© DartWorld 2022-2025 | All rights reserved</p>
+</footer>
+
+<script>
+    function toggleDropdown() {
+        document.getElementById('dropdownContent').classList.toggle('show');
+    }
+
+    // Закрыть меню при клике вне
+    window.addEventListener('click', function (event) {
+        const dropdown = document.getElementById('userDropdown');
+        if (!dropdown.contains(event.target)) {
+            document.getElementById('dropdownContent').classList.remove('show');
         }
-    </script>
+    });
+</script>
 </body>
 </html>
